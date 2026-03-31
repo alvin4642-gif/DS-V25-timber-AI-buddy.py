@@ -1,4 +1,4 @@
-# DS V25 timber AI buddy.py - PROFESSIONAL CLEAN VERSION
+# DS V25 timber AI buddy.py - FINAL VERSION (SGD, Fixed Reset, Bin Icons)
 import streamlit as st
 import pandas as pd
 import re
@@ -10,61 +10,98 @@ from datetime import datetime
 # ==============================
 st.set_page_config(layout="wide", page_title="Timber AI Assistant V25", page_icon="📄")
 st.title("Timber AI Assistant V25")
-st.caption("Professional Quoting System")
+st.caption("Professional Quoting System (Prices in SGD)")
 
 # ==============================
-# CUSTOM CSS FOR COMPACT LAYOUT
+# CUSTOM CSS
 # ==============================
 st.markdown("""
 <style>
-/* Compact spacing */
-.block-container {
-    padding-top: 1rem;
-    padding-bottom: 0rem;
+/* Green generate button */
+.stButton button[kind="primary"] {
+    background-color: #10b981;
+    color: white;
 }
-.stMetric {
-    background-color: #f8f9fa;
-    padding: 10px;
-    border-radius: 5px;
+.stButton button[kind="primary"]:hover {
+    background-color: #059669;
 }
-/* Professional quote box */
-.quote-box {
-    background-color: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    padding: 15px;
-    margin: 10px 0;
+/* Staff log spacing */
+.stTextArea textarea {
+    line-height: 1.8;
     font-family: 'Courier New', monospace;
-    font-size: 13px;
 }
-.quote-line {
-    border-bottom: 1px solid #e5e7eb;
-    padding: 5px 0;
+/* Bigger mode selector */
+div[data-testid="stRadio"] > div {
+    gap: 20px;
 }
-.total-line {
-    border-top: 2px solid #000000;
-    padding-top: 8px;
-    margin-top: 8px;
+div[data-testid="stRadio"] label {
+    font-size: 20px !important;
+    font-weight: bold !important;
+    padding: 10px 20px !important;
+    background-color: #f0f2f6;
+    border-radius: 10px;
+}
+div[data-testid="stRadio"] label:hover {
+    background-color: #e0e2e6;
+}
+/* Bin button styling */
+.delete-btn {
+    color: #dc2626;
     font-weight: bold;
 }
-/* Hide default streamlit decorations */
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# RESET FUNCTION
+# RESET FUNCTION - FIXED
 # ==============================
 def reset_all():
+    # Clear all session state keys
     for k in list(st.session_state.keys()):
         del st.session_state[k]
     st.rerun()
 
+def clear_timber_table():
+    if 'timber' in st.session_state:
+        # Reset to 5 empty rows
+        st.session_state.timber = pd.DataFrame([{
+            "Species": "Kapur",
+            "Thickness": None,
+            "T Unit": "mm",
+            "Width": None,
+            "W Unit": "mm",
+            "Length": None,
+            "L Unit": "m",
+            "Qty": None
+        } for _ in range(5)])
+    st.rerun()
+
+def clear_plywood_table():
+    if 'plywood' in st.session_state:
+        # Reset to 1 empty row
+        st.session_state.plywood = pd.DataFrame([{
+            "Type": "Marine",
+            "Thickness": None,
+            "Qty": None
+        }])
+    st.rerun()
+
 # ==============================
-# RATES SECTION
+# MODE SELECTION - MOVED TO TOP, BIGGER
 # ==============================
-st.subheader("Current Rates (USD/ton)")
+st.markdown("### 📋 SELECT QUOTING MODE")
+mode = st.radio(
+    "",
+    ["Customer Enquiry", "Manual Table"],
+    horizontal=True,
+    label_visibility="collapsed"
+)
+st.divider()
+
+# ==============================
+# RATES SECTION (SGD)
+# ==============================
+st.subheader("Current Rates (SGD/ton)")
 
 col1, col2, col3, col4, col5 = st.columns(5)
 
@@ -88,9 +125,9 @@ species_rate = {
 }
 
 # ==============================
-# PLYWOOD PRICES SECTION
+# PLYWOOD PRICES SECTION (SGD)
 # ==============================
-with st.expander("Plywood Prices (USD/sheet)", expanded=False):
+with st.expander("Plywood Prices (SGD/sheet)", expanded=False):
     plywood_tab1, plywood_tab2, plywood_tab3 = st.tabs(["Marine", "Furniture", "MR"])
     
     with plywood_tab1:
@@ -137,15 +174,6 @@ plywood_prices = {
 st.divider()
 
 # ==============================
-# MODE SELECTION
-# ==============================
-mode = st.radio(
-    "Select Mode",
-    ["Customer Enquiry", "Manual Table"],
-    horizontal=True
-)
-
-# ==============================
 # CONSTANTS & FUNCTIONS
 # ==============================
 inch_to_mm = {1: 20, 2: 43, 3: 70, 4: 93, 6: 143, 8: 193}
@@ -182,13 +210,22 @@ with st.form(key="main_form"):
         enquiry = st.text_area("Customer Enquiry", height=120, 
                                placeholder="Example: Kapur 20mm x 100mm x 2.4m 50pcs")
         
-        if st.form_submit_button("Load Sample"):
-            enquiry = """Kapur 20mm x 100mm x 2.4m 50pcs
+        sample_col = st.columns([1, 4])
+        with sample_col[0]:
+            if st.form_submit_button("Load Sample"):
+                enquiry = """Kapur 20mm x 100mm x 2.4m 50pcs
 Balau 1" x 3" x 8ft 100pcs
-Chengal 25mm x 150mm x 3.0m 25pcs"""
+Chengal 25mm x 150mm x 3.0m 25pcs
+MR plywood 3mm 3pcs"""
     
     if mode == "Manual Table":
         st.subheader("Timber Order Table")
+        
+        # Button row for timber table
+        timber_col1, timber_col2 = st.columns([6, 1])
+        with timber_col2:
+            if st.form_submit_button("🗑️ Clear Timber Table", use_container_width=True):
+                clear_timber_table()
         
         default_rows = []
         for i in range(5):
@@ -221,6 +258,13 @@ Chengal 25mm x 150mm x 3.0m 25pcs"""
         )
         
         st.subheader("Plywood Order Table")
+        
+        # Button row for plywood table
+        plywood_col1, plywood_col2 = st.columns([6, 1])
+        with plywood_col2:
+            if st.form_submit_button("🗑️ Clear Plywood Table", use_container_width=True):
+                clear_plywood_table()
+        
         plywood_df = pd.DataFrame([{"Type": "Marine", "Thickness": None, "Qty": None}])
         
         plywood_table = st.data_editor(
@@ -233,9 +277,11 @@ Chengal 25mm x 150mm x 3.0m 25pcs"""
             }
         )
     
-    colA, colB = st.columns(2)
-    generate = colA.form_submit_button("GENERATE QUOTE", type="primary", use_container_width=True)
-    reset = colB.form_submit_button("RESET", use_container_width=True)
+    colA, colB = st.columns([2, 1])
+    with colA:
+        generate = st.form_submit_button("GENERATE QUOTE", type="primary", use_container_width=True)
+    with colB:
+        reset = st.form_submit_button("RESET ALL", use_container_width=True)
 
 if reset:
     reset_all()
@@ -244,9 +290,10 @@ if reset:
 # GENERATE QUOTE
 # ==============================
 if generate:
-    quote_items = []
-    calculation_log = []
-    grand_total = 0.0
+    internal_view = []
+    customer_reply = []
+    grand_total = 0
+    errors = []
     
     if mode == "Customer Enquiry":
         if not enquiry.strip():
@@ -260,6 +307,57 @@ if generate:
             if not line.strip():
                 continue
             
+            # Check for plywood first
+            if "mr plywood" in line or ("mr" in line and "plywood" in line):
+                # Parse plywood
+                thickness_match = re.search(r'(\d+)\s*mm', line)
+                qty_match = re.search(r'(\d+)\s*pcs', line)
+                
+                if thickness_match and qty_match:
+                    thk = int(thickness_match.group(1))
+                    qty = int(qty_match.group(1))
+                    
+                    grade = "MR"
+                    original_qty = qty
+                    note = ""
+                    actual_qty = original_qty
+                    
+                    if grade == "MR" and thk == 3 and original_qty < 10:
+                        actual_qty = 10
+                        note = "3mm MR plywood MOQ 10pcs (customer requested {}pcs, adjusted to 10pcs)".format(original_qty)
+                    
+                    if thk in plywood_prices[grade]:
+                        price = plywood_prices[grade][thk]
+                        line_total = round(price * actual_qty, 2)
+                        grand_total += line_total
+                        
+                        internal_view.append(
+                            f"""{grade.upper()} plywood
+{thk}mm
+
+$/pcs : {price}
+
+Customer Qty : {original_qty} pcs
+Adjusted Qty : {actual_qty} pcs
+Total : ${line_total}
+
+------------------------"""
+                        )
+                        
+                        if note:
+                            customer_reply.append(
+                                f"""{grade} plywood {thk}mm @ ${price}/pcs x {actual_qty} = ${line_total}
+({note})"""
+                            )
+                        else:
+                            customer_reply.append(
+                                f"""{grade} plywood {thk}mm @ ${price}/pcs x {actual_qty} = ${line_total}"""
+                            )
+                    else:
+                        errors.append(f"Line {line_num}: Thickness {thk}mm not available for {grade}")
+                continue
+            
+            # Species detection for timber
             if "kapur" in line:
                 current_species = "Kapur"
             elif "balau" in line:
@@ -306,21 +404,31 @@ if generate:
                     line_total = round(price * qty, 2)
                     grand_total += line_total
                     
-                    quote_items.append({
-                        "type": "timber",
-                        "name": f"{current_species} Timber",
-                        "size": size_text,
-                        "price": price,
-                        "qty": qty,
-                        "total": line_total
-                    })
+                    internal_view.append(
+                        f"""{current_species.upper()} timber
+{size_text}
+
+$/ton : {rate}
+pcs/ton : {pcs_per_ton}
+$/pcs : {price}
+
+Qty : {qty}
+Total : ${line_total}
+
+------------------------"""
+                    )
                     
-                    calculation_log.append(f"{current_species} | {size_text} | Rate: ${rate}/ton | {pcs_per_ton} pcs/ton | ${price}/pcs | Qty: {qty} | Total: ${line_total}")
+                    customer_reply.append(
+                        f"""{current_species} timber
+{size_text} @ ${price}/pcs x {qty} = ${line_total}
+"""
+                    )
                     
                 except Exception as e:
-                    st.error(f"Line {line_num}: {str(e)}")
+                    errors.append(f"Error processing line {line_num}: {str(e)}")
     
     if mode == "Manual Table":
+        # Process timber
         for idx, row in timber_table.iterrows():
             if pd.isna(row["Thickness"]) or pd.isna(row["Width"]) or pd.isna(row["Length"]) or pd.isna(row["Qty"]):
                 continue
@@ -351,20 +459,30 @@ if generate:
                 line_total = round(price * qty, 2)
                 grand_total += line_total
                 
-                quote_items.append({
-                    "type": "timber",
-                    "name": f"{species} Timber",
-                    "size": size_text,
-                    "price": price,
-                    "qty": qty,
-                    "total": line_total
-                })
+                internal_view.append(
+                    f"""{species.upper()} timber
+{size_text}
+
+$/ton : {rate}
+pcs/ton : {pcs_per_ton}
+$/pcs : {price}
+
+Qty : {qty}
+Total : ${line_total}
+
+------------------------"""
+                )
                 
-                calculation_log.append(f"{species} | {size_text} | Rate: ${rate}/ton | {pcs_per_ton} pcs/ton | ${price}/pcs | Qty: {qty} | Total: ${line_total}")
+                customer_reply.append(
+                    f"""{species} timber
+{size_text} @ ${price}/pcs x {qty} = ${line_total}
+"""
+                )
                 
             except Exception as e:
-                st.error(f"Row {idx+1}: {str(e)}")
+                errors.append(f"Error processing timber row {idx+1}: {str(e)}")
         
+        # Process plywood with MOQ
         for idx, row in plywood_table.iterrows():
             if pd.isna(row["Thickness"]) or pd.isna(row["Qty"]):
                 continue
@@ -372,116 +490,94 @@ if generate:
             try:
                 grade = row["Type"]
                 thk = int(row["Thickness"])
-                qty = int(row["Qty"])
+                original_qty = int(row["Qty"])
                 
                 note = ""
-                if grade == "MR" and thk == 3 and qty < 10:
-                    qty = 10
-                    note = "(MOQ adjusted to 10pcs)"
+                actual_qty = original_qty
+                
+                if grade == "MR" and thk == 3 and original_qty < 10:
+                    actual_qty = 10
+                    note = "3mm MR plywood MOQ 10pcs (customer requested {}pcs, adjusted to 10pcs)".format(original_qty)
                 
                 if thk not in plywood_prices[grade]:
-                    st.error(f"Plywood row {idx+1}: {thk}mm not available for {grade}")
+                    errors.append(f"Plywood row {idx+1}: Thickness {thk}mm not available for {grade}")
                     continue
                 
                 price = plywood_prices[grade][thk]
-                line_total = round(price * qty, 2)
+                line_total = round(price * actual_qty, 2)
                 grand_total += line_total
                 
-                quote_items.append({
-                    "type": "plywood",
-                    "name": f"{grade} Plywood {thk}mm",
-                    "size": f"{thk}mm",
-                    "price": price,
-                    "qty": qty,
-                    "total": line_total,
-                    "note": note
-                })
+                internal_view.append(
+                    f"""{grade.upper()} plywood
+{thk}mm
+
+$/pcs : {price}
+
+Customer Qty : {original_qty} pcs
+Adjusted Qty : {actual_qty} pcs
+Total : ${line_total}
+
+------------------------"""
+                )
                 
-                calculation_log.append(f"{grade} Plywood {thk}mm | ${price}/pcs | Qty: {qty} | Total: ${line_total} {note}")
-                
+                if note:
+                    customer_reply.append(
+                        f"""{grade} plywood {thk}mm @ ${price}/pcs x {actual_qty} = ${line_total}
+({note})"""
+                    )
+                else:
+                    customer_reply.append(
+                        f"""{grade} plywood {thk}mm @ ${price}/pcs x {actual_qty} = ${line_total}"""
+                    )
+                    
             except Exception as e:
-                st.error(f"Plywood row {idx+1}: {str(e)}")
+                errors.append(f"Error processing plywood row {idx+1}: {str(e)}")
     
     # ==============================
-    # DISPLAY RESULTS - PROFESSIONAL LAYOUT
+    # DISPLAY RESULTS
     # ==============================
-    if quote_items:
-        st.divider()
-        
-        # Summary Row
+    if internal_view:
+        # Summary metrics
         st.subheader("Quote Summary")
-        col_s1, col_s2, col_s3 = st.columns(3)
-        with col_s1:
-            st.metric("Total Items", len(quote_items))
-        with col_s2:
-            st.metric("Grand Total", f"${grand_total:,.2f}")
-        with col_s3:
-            st.metric("Quote Date", datetime.now().strftime("%Y-%m-%d"))
+        col_m1, col_m2, col_m3 = st.columns(3)
+        with col_m1:
+            st.metric("Total Items", len(customer_reply))
+        with col_m2:
+            st.metric("Grand Total", f"S${grand_total:,.2f}")
+        with col_m3:
+            st.metric("Quote Generated", datetime.now().strftime("%H:%M:%S"))
+        
+        # Staff Calculation Log
+        st.subheader("Staff Calculation Log")
+        st.text_area("", "\n\n".join(internal_view), height=300)
         
         st.divider()
         
-        # Two Column Layout: Left = Quote Items, Right = Summary Info
-        col_left, col_right = st.columns([2, 1])
+        # Customer Reply
+        st.subheader("Customer Reply")
         
-        with col_left:
-            st.markdown("### Quoted Items")
-            st.markdown("---")
-            
-            for i, item in enumerate(quote_items, 1):
-                st.markdown(f"**{i}. {item['name']}**")
-                st.markdown(f"   Size: {item['size']}")
-                st.markdown(f"   Unit Price: ${item['price']:,.2f}/pcs")
-                st.markdown(f"   Quantity: {item['qty']} pcs")
-                st.markdown(f"   **Total: ${item['total']:,.2f}**")
-                if item.get('note'):
-                    st.caption(f"   Note: {item['note']}")
-                st.markdown("---")
+        customer_reply.append(f"\nTotal : S${round(grand_total,2)}")
+        customer_reply.append("\ntolerance +-1~2mm")
+        customer_reply.append("tolerance length +-25~50mm")
+        customer_reply.append("\nDelivery / Self Collection:")
+        customer_reply.append("30 Krani Loop (Blk A) #04-05")
+        customer_reply.append("TimMac @ Kranji S739570")
         
-        with col_right:
-            st.markdown("### Summary")
-            st.markdown("---")
-            st.markdown(f"**Subtotal:** ${grand_total:,.2f}")
-            st.markdown("---")
-            st.markdown("**Delivery / Collection:**")
-            st.markdown("30 Krani Loop (Blk A) #04-05")
-            st.markdown("TimMac @ Kranji S739570")
-            st.markdown("---")
-            st.markdown("**Tolerances:**")
-            st.markdown("• Thickness/Width: +-1~2mm")
-            st.markdown("• Length: +-25~50mm")
-            st.markdown("---")
-            st.caption(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        st.text_area("Ready to Send", "\n".join(customer_reply), height=350)
         
-        st.divider()
-        
-        # Staff Calculation Log (Collapsible)
-        with st.expander("Staff Calculation Log"):
-            st.text("\n".join(calculation_log))
-        
-        # Export Button
-        export_text = "TIMBER AI ASSISTANT V25 - QUOTE\n"
-        export_text += "=" * 50 + "\n\n"
-        for i, item in enumerate(quote_items, 1):
-            export_text += f"{i}. {item['name']}\n"
-            export_text += f"   Size: {item['size']}\n"
-            export_text += f"   ${item['price']:,.2f}/pcs x {item['qty']} pcs = ${item['total']:,.2f}\n\n"
-        export_text += "=" * 50 + "\n"
-        export_text += f"TOTAL: ${grand_total:,.2f}\n\n"
-        export_text += "Delivery: 30 Krani Loop (Blk A) #04-05, TimMac @ Kranji S739570\n"
-        export_text += f"Quote Date: {datetime.now().strftime('%Y-%m-%d')}\n"
-        
+        # Export button
         st.download_button(
             label="Export Quote (TXT)",
-            data=export_text,
-            file_name=f"quote_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+            data="\n".join(customer_reply),
+            file_name=f"timber_quote_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
             mime="text/plain"
         )
         
     else:
-        st.warning("No valid items to process. Please add items to quote.")
+        st.warning("No valid items to process. Please check your inputs.")
 
 # ==============================
 # FOOTER
 # ==============================
 st.markdown("---")
-st.caption("Timber AI Assistant V25 | Professional Quoting System")
+st.caption("Timber AI Assistant V25 | Professional Quoting System | Prices in SGD")
