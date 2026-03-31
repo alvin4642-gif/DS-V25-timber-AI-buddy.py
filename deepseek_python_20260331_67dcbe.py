@@ -30,21 +30,21 @@ def load_prices():
             # Create default config if not exists
             default_config = {
                 "timber": {
-                    "Kapur": 3800,
-                    "Balau": 5500,
-                    "Chengal": 6000,
-                    "Mixed Keruing": 650,
-                    "Pure Keruing": 1000
+                    "Kapur": 3800.0,
+                    "Balau": 5500.0,
+                    "Chengal": 6000.0,
+                    "Mixed Keruing": 650.0,
+                    "Pure Keruing": 1000.0
                 },
                 "plywood": {
                     "Marine": {
-                        "6": 25.5, "9": 37.0, "12": 45, "15": 56, "18": 68.5, "25": 95
+                        "6": 25.5, "9": 37.0, "12": 45.0, "15": 56.0, "18": 68.5, "25": 95.0
                     },
                     "Furniture": {
-                        "3": 15, "6": 17.5, "9": 19.5, "12": 23.8, "15": 26.8, "18": 31.5, "25": 45
+                        "3": 15.0, "6": 17.5, "9": 19.5, "12": 23.8, "15": 26.8, "18": 31.5, "25": 45.0
                     },
                     "MR": {
-                        "3": 4.1, "6": 6.8, "9": 10.5, "12": 15, "15": 19.5, "18": 21.7
+                        "3": 4.1, "6": 6.8, "9": 10.5, "12": 15.0, "15": 19.5, "18": 21.7
                     }
                 },
                 "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -102,8 +102,7 @@ with col_info3:
 # ==============================
 def reset_all():
     for k in list(st.session_state.keys()):
-        if k not in ['prices_loaded']:  # Preserve price cache
-            del st.session_state[k]
+        del st.session_state[k]
     st.rerun()
 
 # ==============================
@@ -120,15 +119,45 @@ with st.expander("💰 Price Management (Edit Offline - Saves to JSON)", expande
         
         edited_timber = {}
         with col1:
-            edited_timber["Kapur"] = st.number_input("Kapur", value=float(timber_prices["Kapur"]), step=50, key="edit_kapur")
+            edited_timber["Kapur"] = st.number_input(
+                "Kapur", 
+                value=float(timber_prices["Kapur"]), 
+                step=50.0, 
+                format="%.0f",
+                key="edit_kapur"
+            )
         with col2:
-            edited_timber["Balau"] = st.number_input("Balau", value=float(timber_prices["Balau"]), step=50, key="edit_balau")
+            edited_timber["Balau"] = st.number_input(
+                "Balau", 
+                value=float(timber_prices["Balau"]), 
+                step=50.0,
+                format="%.0f", 
+                key="edit_balau"
+            )
         with col3:
-            edited_timber["Chengal"] = st.number_input("Chengal", value=float(timber_prices["Chengal"]), step=50, key="edit_chengal")
+            edited_timber["Chengal"] = st.number_input(
+                "Chengal", 
+                value=float(timber_prices["Chengal"]), 
+                step=50.0,
+                format="%.0f", 
+                key="edit_chengal"
+            )
         with col4:
-            edited_timber["Mixed Keruing"] = st.number_input("Mixed Keruing", value=float(timber_prices["Mixed Keruing"]), step=50, key="edit_mixed")
+            edited_timber["Mixed Keruing"] = st.number_input(
+                "Mixed Keruing", 
+                value=float(timber_prices["Mixed Keruing"]), 
+                step=50.0,
+                format="%.0f", 
+                key="edit_mixed"
+            )
         with col5:
-            edited_timber["Pure Keruing"] = st.number_input("Pure Keruing", value=float(timber_prices["Pure Keruing"]), step=50, key="edit_pure")
+            edited_timber["Pure Keruing"] = st.number_input(
+                "Pure Keruing", 
+                value=float(timber_prices["Pure Keruing"]), 
+                step=50.0,
+                format="%.0f", 
+                key="edit_pure"
+            )
     
     with tab2:
         st.subheader("Plywood Prices ($/sheet)")
@@ -185,7 +214,6 @@ with st.expander("💰 Price Management (Edit Offline - Saves to JSON)", expande
                 if success:
                     st.success(message)
                     st.info("🔄 Click 'Refresh Prices' above to reload into app")
-                    # ✅ FIXED: No global declaration needed
                     st.cache_data.clear()
                 else:
                     st.error(message)
@@ -195,13 +223,13 @@ with st.expander("💰 Price Management (Edit Offline - Saves to JSON)", expande
         if st.button("🗑️ Reset to Default Prices"):
             default_config = {
                 "timber": {
-                    "Kapur": 3800, "Balau": 5500, "Chengal": 6000,
-                    "Mixed Keruing": 650, "Pure Keruing": 1000
+                    "Kapur": 3800.0, "Balau": 5500.0, "Chengal": 6000.0,
+                    "Mixed Keruing": 650.0, "Pure Keruing": 1000.0
                 },
                 "plywood": {
-                    "Marine": {"6": 25.5, "9": 37.0, "12": 45, "15": 56, "18": 68.5, "25": 95},
-                    "Furniture": {"3": 15, "6": 17.5, "9": 19.5, "12": 23.8, "15": 26.8, "18": 31.5, "25": 45},
-                    "MR": {"3": 4.1, "6": 6.8, "9": 10.5, "12": 15, "15": 19.5, "18": 21.7}
+                    "Marine": {"6": 25.5, "9": 37.0, "12": 45.0, "15": 56.0, "18": 68.5, "25": 95.0},
+                    "Furniture": {"3": 15.0, "6": 17.5, "9": 19.5, "12": 23.8, "15": 26.8, "18": 31.5, "25": 45.0},
+                    "MR": {"3": 4.1, "6": 6.8, "9": 10.5, "12": 15.0, "15": 19.5, "18": 21.7}
                 },
                 "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "version": "25.0"
@@ -218,15 +246,15 @@ with st.expander("💰 Price Management (Edit Offline - Saves to JSON)", expande
 st.subheader("💰 Current Market Rates")
 col_r1, col_r2, col_r3, col_r4, col_r5 = st.columns(5)
 with col_r1:
-    st.metric("Kapur", f"${timber_prices['Kapur']}/ton")
+    st.metric("Kapur", f"${timber_prices['Kapur']:,.0f}/ton")
 with col_r2:
-    st.metric("Balau", f"${timber_prices['Balau']}/ton")
+    st.metric("Balau", f"${timber_prices['Balau']:,.0f}/ton")
 with col_r3:
-    st.metric("Chengal", f"${timber_prices['Chengal']}/ton")
+    st.metric("Chengal", f"${timber_prices['Chengal']:,.0f}/ton")
 with col_r4:
-    st.metric("Mixed Keruing", f"${timber_prices['Mixed Keruing']}/ton")
+    st.metric("Mixed Keruing", f"${timber_prices['Mixed Keruing']:,.0f}/ton")
 with col_r5:
-    st.metric("Pure Keruing", f"${timber_prices['Pure Keruing']}/ton")
+    st.metric("Pure Keruing", f"${timber_prices['Pure Keruing']:,.0f}/ton")
 
 # ==============================
 # MODE SELECTION
@@ -296,11 +324,15 @@ with st.form("main_form"):
                                placeholder="Example:\nKapur 20mm x 100mm x 2.4m 50pcs\nBalau 1\" x 3\" x 8ft 100pcs")
         
         # Sample button for testing
-        if st.form_submit_button("Load Sample Enquiry"):
-            enquiry = """Kapur 20mm x 100mm x 2.4m 50pcs
+        sample_clicked = st.form_submit_button("Load Sample Enquiry")
+        if sample_clicked:
+            st.session_state.sample_enquiry = """Kapur 20mm x 100mm x 2.4m 50pcs
 Balau 1" x 3" x 8ft 100pcs
 Chengal 25mm x 150mm x 3.0m 25pcs"""
             st.rerun()
+        
+        if "sample_enquiry" in st.session_state:
+            enquiry = st.session_state.sample_enquiry
     
     if mode == "Manual Table":
         st.subheader("📋 Timber Order Table")
@@ -368,7 +400,7 @@ if refresh:
     reset_all()
 
 # ==============================
-# GENERATION ENGINE (Rest of your code remains the same)
+# GENERATION ENGINE
 # ==============================
 if generate:
     internal_view = []
@@ -376,16 +408,277 @@ if generate:
     grand_total = 0
     errors = []
     
-    # Add the rest of your generation code here
-    # (Keep everything from your original generation engine)
-    
     if mode == "Customer Enquiry":
-        # ... your existing customer enquiry code ...
-        pass
+        if not enquiry.strip():
+            st.error("Please enter customer enquiry")
+            st.stop()
+        
+        lines = enquiry.lower().split("\n")
+        current_species = None
+        
+        for line_num, line in enumerate(lines, 1):
+            if not line.strip():
+                continue
+            
+            # Species detection
+            if "kapur" in line:
+                current_species = "Kapur"
+            elif "balau" in line:
+                current_species = "Balau"
+            elif "chengal" in line:
+                current_species = "Chengal"
+            elif "mixed" in line and "keruing" in line:
+                current_species = "Mixed Keruing"
+            elif "pure keruing" in line:
+                current_species = "Pure Keruing"
+            
+            if not current_species:
+                continue
+            
+            # Extract quantity
+            qty_match = re.findall(r'(\d+)\s*(pcs|nos|pieces|pc)', line)
+            qty = int(qty_match[0][0]) if qty_match else 1
+            
+            # Extract dimensions
+            size_match = re.findall(
+                r'(\d+(?:\.\d+)?)\s*(mm|inch|")\s*[x*]\s*(\d+(?:\.\d+)?)\s*(mm|inch|")\s*[x*]\s*(\d+(?:\.\d+)?)\s*(m|ft|\')',
+                line,
+                re.IGNORECASE
+            )
+            
+            for s in size_match:
+                try:
+                    v1, u1, v2, u2, v3, u3 = s
+                    
+                    v1 = float(v1)
+                    v2 = float(v2)
+                    v3 = float(v3)
+                    
+                    # Convert to inches and feet
+                    if u1 in ["mm", "milimeter"]:
+                        thk = mm_to_inch(v1)
+                    else:
+                        thk = int(v1)
+                    
+                    if u2 in ["mm", "milimeter"]:
+                        wid = mm_to_inch(v2)
+                    else:
+                        wid = int(v2)
+                    
+                    if u3 in ["m", "meter"]:
+                        length = m_to_ft(v3)
+                    else:
+                        length = int(v3)
+                    
+                    # Fix for length 19
+                    if length == 19:
+                        length = 20
+                    
+                    # Validation
+                    dimension_errors = validate_dimensions(thk, wid, length)
+                    if dimension_errors:
+                        errors.extend([f"Line {line_num}: {err}" for err in dimension_errors])
+                        continue
+                    
+                    rate = timber_prices[current_species]
+                    pcs_per_ton, pcs, price = calc(thk, wid, length, rate)
+                    
+                    # Size text formatting
+                    if is_keruing(current_species):
+                        size_text = f'{thk}" x {wid}" x {length}ft'
+                    else:
+                        mm_thk = inch_to_mm.get(thk, int(thk * 25.4))
+                        mm_wid = inch_to_mm.get(wid, int(wid * 25.4))
+                        size_text = f"{mm_thk}mm x {mm_wid}mm x {length}ft"
+                    
+                    line_total = round(price * qty, 2)
+                    grand_total += line_total
+                    
+                    internal_view.append(
+                        f"""{current_species.upper()} timber
+{size_text}
+
+$/ton : ${rate:,.2f}
+pcs/ton : {pcs_per_ton}
+$/pcs : ${price:,.2f}
+
+Qty : {qty} pcs
+Total : ${line_total:,.2f}
+
+------------------------"""
+                    )
+                    
+                    customer_reply.append(
+                        f"""📦 {current_species} timber
+   {size_text} @ ${price:,.2f}/pcs x {qty} pcs = ${line_total:,.2f}
+"""
+                    )
+                    
+                except Exception as e:
+                    errors.append(f"Error processing line {line_num}: {str(e)}")
     
     if mode == "Manual Table":
-        # ... your existing manual table code ...
-        pass
+        # Process timber
+        for idx, row in timber_table.iterrows():
+            if pd.isna(row["Thickness"]) or pd.isna(row["Width"]) or pd.isna(row["Length"]) or pd.isna(row["Qty"]):
+                continue
+            
+            try:
+                species = row["Species"]
+                t = float(row["Thickness"])
+                w = float(row["Width"])
+                l = float(row["Length"])
+                qty = int(row["Qty"])
+                
+                # Convert units
+                thk = mm_to_inch(t) if row["T Unit"] == "mm" else int(t)
+                wid = mm_to_inch(w) if row["W Unit"] == "mm" else int(w)
+                length = m_to_ft(l) if row["L Unit"] == "m" else int(l)
+                
+                if length == 19:
+                    length = 20
+                
+                # Validation
+                dimension_errors = validate_dimensions(thk, wid, length)
+                if dimension_errors:
+                    errors.extend([f"Row {idx+1}: {err}" for err in dimension_errors])
+                    continue
+                
+                rate = timber_prices[species]
+                pcs_per_ton, pcs, price = calc(thk, wid, length, rate)
+                
+                if is_keruing(species):
+                    size_text = f'{thk}" x {wid}" x {length}ft'
+                else:
+                    mm_thk = inch_to_mm.get(thk, int(thk * 25.4))
+                    mm_wid = inch_to_mm.get(wid, int(wid * 25.4))
+                    size_text = f"{mm_thk}mm x {mm_wid}mm x {length}ft"
+                
+                line_total = round(price * qty, 2)
+                grand_total += line_total
+                
+                internal_view.append(
+                    f"""{species.upper()} timber
+{size_text}
+
+$/ton : ${rate:,.2f}
+pcs/ton : {pcs_per_ton}
+$/pcs : ${price:,.2f}
+
+Qty : {qty} pcs
+Total : ${line_total:,.2f}
+
+------------------------"""
+                )
+                
+                customer_reply.append(
+                    f"""📦 {species} timber
+   {size_text} @ ${price:,.2f}/pcs x {qty} pcs = ${line_total:,.2f}
+"""
+                )
+                
+            except Exception as e:
+                errors.append(f"Error processing timber row {idx+1}: {str(e)}")
+        
+        # Process plywood
+        for idx, row in plywood_table.iterrows():
+            if pd.isna(row["Thickness"]) or pd.isna(row["Qty"]):
+                continue
+            
+            try:
+                grade = row["Type"]
+                thk = int(row["Thickness"])
+                qty = int(row["Qty"])
+                
+                note = ""
+                
+                # Apply MOQ rules
+                if grade == "MR" and thk == 3 and qty < 10:
+                    qty = 10
+                    note = "⚠️ Minimum order quantity for MR 3mm is 10pcs (adjusted)"
+                
+                thk_str = str(thk)
+                if thk_str not in plywood_prices.get(grade, {}):
+                    errors.append(f"Plywood row {idx+1}: Thickness {thk}mm not available for {grade}")
+                    continue
+                
+                price = plywood_prices[grade][thk_str]
+                line_total = round(price * qty, 2)
+                grand_total += line_total
+                
+                internal_view.append(
+                    f"""{grade.upper()} PLYWOOD
+{thk}mm
+
+$/pcs : ${price:,.2f}
+
+Qty : {qty} pcs
+Total : ${line_total:,.2f}
+
+------------------------"""
+                )
+                
+                customer_reply.append(
+                    f"""📋 {grade} plywood {thk}mm @ ${price:,.2f}/pcs x {qty} pcs = ${line_total:,.2f}"""
+                )
+                
+                if note:
+                    customer_reply.append(note)
+                    
+            except Exception as e:
+                errors.append(f"Error processing plywood row {idx+1}: {str(e)}")
+    
+    # Display errors if any
+    if errors:
+        with st.expander("⚠️ Validation Errors", expanded=True):
+            for error in errors:
+                st.error(error)
+    
+    # Display results if there are any items
+    if internal_view:
+        # Summary metrics
+        st.subheader("📊 Quote Summary")
+        col_m1, col_m2, col_m3 = st.columns(3)
+        with col_m1:
+            st.metric("Total Items", len(customer_reply))
+        with col_m2:
+            st.metric("Grand Total", f"${grand_total:,.2f}")
+        with col_m3:
+            st.metric("Quote Generated", datetime.now().strftime("%H:%M:%S"))
+        
+        # Internal View (for staff)
+        with st.expander("🔧 Internal View (Staff Only)", expanded=False):
+            st.text_area("Detailed Calculations", "\n\n".join(internal_view), height=400)
+        
+        # Customer Reply
+        st.subheader("📄 Customer Quote")
+        
+        # Add footer
+        customer_reply.append(f"\n💰 **TOTAL: ${round(grand_total, 2)}**")
+        customer_reply.append("\n---")
+        customer_reply.append("📏 **Tolerances:**")
+        customer_reply.append("- Thickness/Width: +-1~2mm")
+        customer_reply.append("- Length: +-25~50mm")
+        customer_reply.append("\n🚚 **Delivery / Collection:**")
+        customer_reply.append("30 Krani Loop (Blk A) #04-05")
+        customer_reply.append("TimMac @ Kranji S739570")
+        customer_reply.append(f"\n📅 Quote Date: {datetime.now().strftime('%Y-%m-%d')}")
+        
+        st.text_area("Ready to Send", "\n".join(customer_reply), height=400)
+        
+        # Export option
+        col_e1, col_e2 = st.columns(2)
+        with col_e1:
+            st.download_button(
+                label="📥 Download Quote (TXT)",
+                data="\n".join(customer_reply),
+                file_name=f"timber_quote_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                mime="text/plain"
+            )
+        with col_e2:
+            st.info("💡 Tip: Copy the quote above and paste into email/WhatsApp")
+    else:
+        st.warning("No valid items to process. Please check your inputs.")
 
 # ==============================
 # FOOTER
