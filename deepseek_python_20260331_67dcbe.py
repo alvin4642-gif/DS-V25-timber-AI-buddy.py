@@ -1,4 +1,4 @@
-# DS V25 timber AI buddy.py - FINAL VERSION
+# DS V25 timber AI buddy.py - FINAL VERSION (FIXED MR DETECTION)
 import streamlit as st
 import pandas as pd
 import re
@@ -209,7 +209,7 @@ with st.form(key="main_form"):
                 enquiry = """Kapur 20mm x 100mm x 2.4m 50pcs
 Balau 1" x 3" x 8ft 100pcs
 Chengal 25mm x 150mm x 3.0m 25pcs
-MR plywood 3mm 3pcs"""
+MR 3mm 3pcs"""
     
     if mode == "Manual Table":
         st.subheader("Timber Order Table")
@@ -297,7 +297,48 @@ if generate:
             if not line.strip():
                 continue
             
-            # Check for MR plywood first
+            # Check for MR plywood (with or without the word "plywood")
+            # Pattern: MR followed by thickness mm and quantity pcs
+            mr_match = re.search(r'mr\s*(\d+)\s*mm\s*(\d+)\s*pcs', line)
+            if mr_match:
+                thk = int(mr_match.group(1))
+                original_qty = int(mr_match.group(2))
+                
+                grade = "MR"
+                actual_qty = original_qty
+                moq_message = ""
+                
+                # Apply MOQ rule for MR 3mm
+                if thk == 3 and original_qty < 10:
+                    actual_qty = 10
+                    moq_message = "Note: MR 3mm plywood minimum order quantity is 10pcs"
+                
+                if thk in plywood_prices[grade]:
+                    price = plywood_prices[grade][thk]
+                    line_total = round(price * actual_qty, 2)
+                    grand_total += line_total
+                    
+                    internal_view.append(
+                        f"""{grade.upper()} PLYWOOD
+{thk}mm
+
+Price per sheet: S${price}
+Customer requested: {original_qty} pcs
+Adjusted quantity: {actual_qty} pcs
+Total: S${line_total}
+{moq_message}
+------------------------"""
+                    )
+                    
+                    customer_line = f"{grade} plywood {thk}mm @ S${price}/pcs x {actual_qty} = S${line_total}"
+                    if moq_message:
+                        customer_line += f"\n({moq_message})"
+                    customer_reply.append(customer_line)
+                else:
+                    errors.append(f"Line {line_num}: Thickness {thk}mm not available for {grade}")
+                continue
+            
+            # Also check for "MR plywood" format
             if "mr" in line and "plywood" in line:
                 thickness_match = re.search(r'(\d+)\s*mm', line)
                 qty_match = re.search(r'(\d+)\s*pcs', line)
