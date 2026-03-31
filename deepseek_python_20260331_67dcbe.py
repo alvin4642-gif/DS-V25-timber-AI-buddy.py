@@ -1,4 +1,4 @@
-# DS V25 timber AI buddy.py - FINAL VERSION (SGD, Fixed Reset, Bin Icons)
+# DS V25 timber AI buddy.py - FINAL VERSION
 import streamlit as st
 import pandas as pd
 import re
@@ -19,16 +19,17 @@ st.markdown("""
 <style>
 /* Green generate button */
 .stButton button[kind="primary"] {
-    background-color: #10b981;
-    color: white;
+    background-color: #10b981 !important;
+    color: white !important;
 }
 .stButton button[kind="primary"]:hover {
-    background-color: #059669;
+    background-color: #059669 !important;
 }
-/* Staff log spacing */
+/* Calibri font for text areas */
 .stTextArea textarea {
-    line-height: 1.8;
-    font-family: 'Courier New', monospace;
+    font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
 }
 /* Bigger mode selector */
 div[data-testid="stRadio"] > div {
@@ -44,26 +45,19 @@ div[data-testid="stRadio"] label {
 div[data-testid="stRadio"] label:hover {
     background-color: #e0e2e6;
 }
-/* Bin button styling */
-.delete-btn {
-    color: #dc2626;
-    font-weight: bold;
-}
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# RESET FUNCTION - FIXED
+# RESET FUNCTION
 # ==============================
 def reset_all():
-    # Clear all session state keys
     for k in list(st.session_state.keys()):
         del st.session_state[k]
     st.rerun()
 
 def clear_timber_table():
     if 'timber' in st.session_state:
-        # Reset to 5 empty rows
         st.session_state.timber = pd.DataFrame([{
             "Species": "Kapur",
             "Thickness": None,
@@ -78,7 +72,6 @@ def clear_timber_table():
 
 def clear_plywood_table():
     if 'plywood' in st.session_state:
-        # Reset to 1 empty row
         st.session_state.plywood = pd.DataFrame([{
             "Type": "Marine",
             "Thickness": None,
@@ -87,9 +80,9 @@ def clear_plywood_table():
     st.rerun()
 
 # ==============================
-# MODE SELECTION - MOVED TO TOP, BIGGER
+# MODE SELECTION - TOP
 # ==============================
-st.markdown("### 📋 SELECT QUOTING MODE")
+st.markdown("### SELECT QUOTING MODE")
 mode = st.radio(
     "",
     ["Customer Enquiry", "Manual Table"],
@@ -221,10 +214,9 @@ MR plywood 3mm 3pcs"""
     if mode == "Manual Table":
         st.subheader("Timber Order Table")
         
-        # Button row for timber table
         timber_col1, timber_col2 = st.columns([6, 1])
         with timber_col2:
-            if st.form_submit_button("🗑️ Clear Timber Table", use_container_width=True):
+            if st.form_submit_button("Clear Timber", use_container_width=True):
                 clear_timber_table()
         
         default_rows = []
@@ -259,10 +251,9 @@ MR plywood 3mm 3pcs"""
         
         st.subheader("Plywood Order Table")
         
-        # Button row for plywood table
         plywood_col1, plywood_col2 = st.columns([6, 1])
         with plywood_col2:
-            if st.form_submit_button("🗑️ Clear Plywood Table", use_container_width=True):
+            if st.form_submit_button("Clear Plywood", use_container_width=True):
                 clear_plywood_table()
         
         plywood_df = pd.DataFrame([{"Type": "Marine", "Thickness": None, "Qty": None}])
@@ -301,30 +292,28 @@ if generate:
             st.stop()
         
         lines = enquiry.lower().split("\n")
-        current_species = None
         
         for line_num, line in enumerate(lines, 1):
             if not line.strip():
                 continue
             
-            # Check for plywood first
-            if "mr plywood" in line or ("mr" in line and "plywood" in line):
-                # Parse plywood
+            # Check for MR plywood first
+            if "mr" in line and "plywood" in line:
                 thickness_match = re.search(r'(\d+)\s*mm', line)
                 qty_match = re.search(r'(\d+)\s*pcs', line)
                 
                 if thickness_match and qty_match:
                     thk = int(thickness_match.group(1))
-                    qty = int(qty_match.group(1))
+                    original_qty = int(qty_match.group(1))
                     
                     grade = "MR"
-                    original_qty = qty
-                    note = ""
                     actual_qty = original_qty
+                    moq_message = ""
                     
-                    if grade == "MR" and thk == 3 and original_qty < 10:
+                    # Apply MOQ rule for MR 3mm
+                    if thk == 3 and original_qty < 10:
                         actual_qty = 10
-                        note = "3mm MR plywood MOQ 10pcs (customer requested {}pcs, adjusted to 10pcs)".format(original_qty)
+                        moq_message = "Note: MR 3mm plywood minimum order quantity is 10pcs"
                     
                     if thk in plywood_prices[grade]:
                         price = plywood_prices[grade][thk]
@@ -332,39 +321,34 @@ if generate:
                         grand_total += line_total
                         
                         internal_view.append(
-                            f"""{grade.upper()} plywood
+                            f"""{grade.upper()} PLYWOOD
 {thk}mm
 
-$/pcs : {price}
-
-Customer Qty : {original_qty} pcs
-Adjusted Qty : {actual_qty} pcs
-Total : ${line_total}
-
+Price per sheet: S${price}
+Customer requested: {original_qty} pcs
+Adjusted quantity: {actual_qty} pcs
+Total: S${line_total}
+{moq_message}
 ------------------------"""
                         )
                         
-                        if note:
-                            customer_reply.append(
-                                f"""{grade} plywood {thk}mm @ ${price}/pcs x {actual_qty} = ${line_total}
-({note})"""
-                            )
-                        else:
-                            customer_reply.append(
-                                f"""{grade} plywood {thk}mm @ ${price}/pcs x {actual_qty} = ${line_total}"""
-                            )
+                        customer_line = f"{grade} plywood {thk}mm @ S${price}/pcs x {actual_qty} = S${line_total}"
+                        if moq_message:
+                            customer_line += f"\n({moq_message})"
+                        customer_reply.append(customer_line)
                     else:
                         errors.append(f"Line {line_num}: Thickness {thk}mm not available for {grade}")
                 continue
             
-            # Species detection for timber
+            # Process timber
+            current_species = None
             if "kapur" in line:
                 current_species = "Kapur"
             elif "balau" in line:
                 current_species = "Balau"
             elif "chengal" in line:
                 current_species = "Chengal"
-            elif "mixed" in line and "keruing" in line:
+            elif "mixed keruing" in line:
                 current_species = "Mixed Keruing"
             elif "pure keruing" in line:
                 current_species = "Pure Keruing"
@@ -405,23 +389,19 @@ Total : ${line_total}
                     grand_total += line_total
                     
                     internal_view.append(
-                        f"""{current_species.upper()} timber
+                        f"""{current_species.upper()} TIMBER
 {size_text}
 
-$/ton : {rate}
-pcs/ton : {pcs_per_ton}
-$/pcs : {price}
-
-Qty : {qty}
-Total : ${line_total}
-
+Rate: S${rate}/ton
+Pieces per ton: {pcs_per_ton}
+Price per piece: S${price}
+Quantity: {qty} pcs
+Total: S${line_total}
 ------------------------"""
                     )
                     
                     customer_reply.append(
-                        f"""{current_species} timber
-{size_text} @ ${price}/pcs x {qty} = ${line_total}
-"""
+                        f"{current_species} timber\n{size_text} @ S${price}/pcs x {qty} = S${line_total}"
                     )
                     
                 except Exception as e:
@@ -460,23 +440,19 @@ Total : ${line_total}
                 grand_total += line_total
                 
                 internal_view.append(
-                    f"""{species.upper()} timber
+                    f"""{species.upper()} TIMBER
 {size_text}
 
-$/ton : {rate}
-pcs/ton : {pcs_per_ton}
-$/pcs : {price}
-
-Qty : {qty}
-Total : ${line_total}
-
+Rate: S${rate}/ton
+Pieces per ton: {pcs_per_ton}
+Price per piece: S${price}
+Quantity: {qty} pcs
+Total: S${line_total}
 ------------------------"""
                 )
                 
                 customer_reply.append(
-                    f"""{species} timber
-{size_text} @ ${price}/pcs x {qty} = ${line_total}
-"""
+                    f"{species} timber\n{size_text} @ S${price}/pcs x {qty} = S${line_total}"
                 )
                 
             except Exception as e:
@@ -492,12 +468,12 @@ Total : ${line_total}
                 thk = int(row["Thickness"])
                 original_qty = int(row["Qty"])
                 
-                note = ""
                 actual_qty = original_qty
+                moq_message = ""
                 
                 if grade == "MR" and thk == 3 and original_qty < 10:
                     actual_qty = 10
-                    note = "3mm MR plywood MOQ 10pcs (customer requested {}pcs, adjusted to 10pcs)".format(original_qty)
+                    moq_message = "Note: MR 3mm plywood minimum order quantity is 10pcs"
                 
                 if thk not in plywood_prices[grade]:
                     errors.append(f"Plywood row {idx+1}: Thickness {thk}mm not available for {grade}")
@@ -508,27 +484,21 @@ Total : ${line_total}
                 grand_total += line_total
                 
                 internal_view.append(
-                    f"""{grade.upper()} plywood
+                    f"""{grade.upper()} PLYWOOD
 {thk}mm
 
-$/pcs : {price}
-
-Customer Qty : {original_qty} pcs
-Adjusted Qty : {actual_qty} pcs
-Total : ${line_total}
-
+Price per sheet: S${price}
+Customer requested: {original_qty} pcs
+Adjusted quantity: {actual_qty} pcs
+Total: S${line_total}
+{moq_message}
 ------------------------"""
                 )
                 
-                if note:
-                    customer_reply.append(
-                        f"""{grade} plywood {thk}mm @ ${price}/pcs x {actual_qty} = ${line_total}
-({note})"""
-                    )
-                else:
-                    customer_reply.append(
-                        f"""{grade} plywood {thk}mm @ ${price}/pcs x {actual_qty} = ${line_total}"""
-                    )
+                customer_line = f"{grade} plywood {thk}mm @ S${price}/pcs x {actual_qty} = S${line_total}"
+                if moq_message:
+                    customer_line += f"\n({moq_message})"
+                customer_reply.append(customer_line)
                     
             except Exception as e:
                 errors.append(f"Error processing plywood row {idx+1}: {str(e)}")
@@ -549,26 +519,35 @@ Total : ${line_total}
         
         # Staff Calculation Log
         st.subheader("Staff Calculation Log")
-        st.text_area("", "\n\n".join(internal_view), height=300)
+        st.text_area("", "\n".join(internal_view), height=300)
         
         st.divider()
         
         # Customer Reply
         st.subheader("Customer Reply")
         
-        customer_reply.append(f"\nTotal : S${round(grand_total,2)}")
-        customer_reply.append("\ntolerance +-1~2mm")
-        customer_reply.append("tolerance length +-25~50mm")
-        customer_reply.append("\nDelivery / Self Collection:")
-        customer_reply.append("30 Krani Loop (Blk A) #04-05")
-        customer_reply.append("TimMac @ Kranji S739570")
+        # Build the final customer reply text
+        final_reply = []
+        for item in customer_reply:
+            final_reply.append(item)
         
-        st.text_area("Ready to Send", "\n".join(customer_reply), height=350)
+        final_reply.append(f"\nTotal : S${round(grand_total,2)}")
+        final_reply.append("\nTolerances:")
+        final_reply.append("- Thickness/Width: +-1~2mm")
+        final_reply.append("- Length: +-25~50mm")
+        final_reply.append("\nDelivery / Self Collection:")
+        final_reply.append("30 Krani Loop (Blk A) #04-05")
+        final_reply.append("TimMac @ Kranji S739570")
+        
+        customer_reply_text = "\n".join(final_reply)
+        
+        # Display the customer reply
+        st.text_area("", customer_reply_text, height=350)
         
         # Export button
         st.download_button(
             label="Export Quote (TXT)",
-            data="\n".join(customer_reply),
+            data=customer_reply_text,
             file_name=f"timber_quote_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
             mime="text/plain"
         )
