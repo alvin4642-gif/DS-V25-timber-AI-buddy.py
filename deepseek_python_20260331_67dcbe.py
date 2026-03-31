@@ -1,4 +1,4 @@
-# DS V25 timber AI buddy.py - FINAL VERSION (FIXED MR DETECTION)
+# DS V25 timber AI buddy.py - FINAL VERSION (FIXED CLEAR BUTTONS)
 import streamlit as st
 import pandas as pd
 import re
@@ -54,29 +54,6 @@ div[data-testid="stRadio"] label:hover {
 def reset_all():
     for k in list(st.session_state.keys()):
         del st.session_state[k]
-    st.rerun()
-
-def clear_timber_table():
-    if 'timber' in st.session_state:
-        st.session_state.timber = pd.DataFrame([{
-            "Species": "Kapur",
-            "Thickness": None,
-            "T Unit": "mm",
-            "Width": None,
-            "W Unit": "mm",
-            "Length": None,
-            "L Unit": "m",
-            "Qty": None
-        } for _ in range(5)])
-    st.rerun()
-
-def clear_plywood_table():
-    if 'plywood' in st.session_state:
-        st.session_state.plywood = pd.DataFrame([{
-            "Type": "Marine",
-            "Thickness": None,
-            "Qty": None
-        }])
     st.rerun()
 
 # ==============================
@@ -195,6 +172,31 @@ def is_keruing(species):
     return species in ["Mixed Keruing", "Pure Keruing"]
 
 # ==============================
+# INITIALIZE SESSION STATE FOR TABLES
+# ==============================
+if "timber_df" not in st.session_state:
+    default_rows = []
+    for i in range(5):
+        default_rows.append({
+            "Species": "Kapur",
+            "Thickness": None,
+            "T Unit": "mm",
+            "Width": None,
+            "W Unit": "mm",
+            "Length": None,
+            "L Unit": "m",
+            "Qty": None
+        })
+    st.session_state.timber_df = pd.DataFrame(default_rows)
+
+if "plywood_df" not in st.session_state:
+    st.session_state.plywood_df = pd.DataFrame([{
+        "Type": "Marine",
+        "Thickness": None,
+        "Qty": None
+    }])
+
+# ==============================
 # MAIN FORM
 # ==============================
 with st.form(key="main_form"):
@@ -216,29 +218,28 @@ MR 3mm 3pcs"""
         
         timber_col1, timber_col2 = st.columns([6, 1])
         with timber_col2:
-            if st.form_submit_button("Clear Timber", use_container_width=True):
-                clear_timber_table()
-        
-        default_rows = []
-        for i in range(5):
-            default_rows.append({
-                "Species": "Kapur",
-                "Thickness": None,
-                "T Unit": "mm",
-                "Width": None,
-                "W Unit": "mm",
-                "Length": None,
-                "L Unit": "m",
-                "Qty": None
-            })
-        
-        timber_df = pd.DataFrame(default_rows)
+            if st.form_submit_button("Clear Timber"):
+                # Reset timber dataframe
+                default_rows = []
+                for i in range(5):
+                    default_rows.append({
+                        "Species": "Kapur",
+                        "Thickness": None,
+                        "T Unit": "mm",
+                        "Width": None,
+                        "W Unit": "mm",
+                        "Length": None,
+                        "L Unit": "m",
+                        "Qty": None
+                    })
+                st.session_state.timber_df = pd.DataFrame(default_rows)
+                st.rerun()
         
         timber_table = st.data_editor(
-            timber_df,
+            st.session_state.timber_df,
             num_rows="dynamic",
             use_container_width=True,
-            key="timber",
+            key="timber_editor",
             column_config={
                 "Species": st.column_config.SelectboxColumn(
                     options=["Kapur", "Balau", "Chengal", "Mixed Keruing", "Pure Keruing"]
@@ -248,25 +249,33 @@ MR 3mm 3pcs"""
                 "L Unit": st.column_config.SelectboxColumn(options=["m", "ft"], default="m")
             }
         )
+        # Save edited data back to session state
+        st.session_state.timber_df = timber_table
         
         st.subheader("Plywood Order Table")
         
         plywood_col1, plywood_col2 = st.columns([6, 1])
         with plywood_col2:
-            if st.form_submit_button("Clear Plywood", use_container_width=True):
-                clear_plywood_table()
-        
-        plywood_df = pd.DataFrame([{"Type": "Marine", "Thickness": None, "Qty": None}])
+            if st.form_submit_button("Clear Plywood"):
+                # Reset plywood dataframe
+                st.session_state.plywood_df = pd.DataFrame([{
+                    "Type": "Marine",
+                    "Thickness": None,
+                    "Qty": None
+                }])
+                st.rerun()
         
         plywood_table = st.data_editor(
-            plywood_df,
+            st.session_state.plywood_df,
             num_rows="dynamic",
             use_container_width=True,
-            key="plywood",
+            key="plywood_editor",
             column_config={
                 "Type": st.column_config.SelectboxColumn(options=["Marine", "Furniture", "MR"])
             }
         )
+        # Save edited data back to session state
+        st.session_state.plywood_df = plywood_table
     
     colA, colB = st.columns([2, 1])
     with colA:
@@ -298,7 +307,6 @@ if generate:
                 continue
             
             # Check for MR plywood (with or without the word "plywood")
-            # Pattern: MR followed by thickness mm and quantity pcs
             mr_match = re.search(r'mr\s*(\d+)\s*mm\s*(\d+)\s*pcs', line)
             if mr_match:
                 thk = int(mr_match.group(1))
@@ -351,7 +359,6 @@ Total: S${line_total}
                     actual_qty = original_qty
                     moq_message = ""
                     
-                    # Apply MOQ rule for MR 3mm
                     if thk == 3 and original_qty < 10:
                         actual_qty = 10
                         moq_message = "Note: MR 3mm plywood minimum order quantity is 10pcs"
@@ -449,8 +456,9 @@ Total: S${line_total}
                     errors.append(f"Error processing line {line_num}: {str(e)}")
     
     if mode == "Manual Table":
-        # Process timber
-        for idx, row in timber_table.iterrows():
+        # Process timber from session state
+        timber_data = st.session_state.timber_df
+        for idx, row in timber_data.iterrows():
             if pd.isna(row["Thickness"]) or pd.isna(row["Width"]) or pd.isna(row["Length"]) or pd.isna(row["Qty"]):
                 continue
             
@@ -499,8 +507,9 @@ Total: S${line_total}
             except Exception as e:
                 errors.append(f"Error processing timber row {idx+1}: {str(e)}")
         
-        # Process plywood with MOQ
-        for idx, row in plywood_table.iterrows():
+        # Process plywood from session state
+        plywood_data = st.session_state.plywood_df
+        for idx, row in plywood_data.iterrows():
             if pd.isna(row["Thickness"]) or pd.isna(row["Qty"]):
                 continue
             
