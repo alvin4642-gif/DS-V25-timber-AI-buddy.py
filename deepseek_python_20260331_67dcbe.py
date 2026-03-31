@@ -1,11 +1,9 @@
-# DS V25 timber AI buddy.py
+# DS V25 timber AI buddy.py - SIMPLIFIED VERSION
 import streamlit as st
 import pandas as pd
 import re
 import math
-import json
 from datetime import datetime
-import os
 
 # ==============================
 # PAGE CONFIG
@@ -13,89 +11,6 @@ import os
 st.set_page_config(layout="wide", page_title="Timber AI Buddy V25", page_icon="🪵")
 st.title("🪵 DS V25 Timber AI Buddy")
 st.caption("Professional Timber & Plywood Quoting System")
-
-# ==============================
-# CONFIG MANAGEMENT (OFFLINE PRICING)
-# ==============================
-CONFIG_PATH = "config/prices.json"
-
-def load_prices():
-    """Load prices from JSON file with fallback defaults"""
-    try:
-        if os.path.exists(CONFIG_PATH):
-            with open(CONFIG_PATH, 'r') as f:
-                config = json.load(f)
-            return config
-        else:
-            # Create default config if not exists
-            default_config = {
-                "timber": {
-                    "Kapur": 3800.0,
-                    "Balau": 5500.0,
-                    "Chengal": 6000.0,
-                    "Mixed Keruing": 650.0,
-                    "Pure Keruing": 1000.0
-                },
-                "plywood": {
-                    "Marine": {
-                        "6": 25.5, "9": 37.0, "12": 45.0, "15": 56.0, "18": 68.5, "25": 95.0
-                    },
-                    "Furniture": {
-                        "3": 15.0, "6": 17.5, "9": 19.5, "12": 23.8, "15": 26.8, "18": 31.5, "25": 45.0
-                    },
-                    "MR": {
-                        "3": 4.1, "6": 6.8, "9": 10.5, "12": 15.0, "15": 19.5, "18": 21.7
-                    }
-                },
-                "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "version": "25.0"
-            }
-            # Ensure config directory exists
-            os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
-            with open(CONFIG_PATH, 'w') as f:
-                json.dump(default_config, f, indent=2)
-            return default_config
-    except Exception as e:
-        st.error(f"Error loading config: {e}")
-        return None
-
-def save_prices(timber_prices, plywood_prices):
-    """Save updated prices to JSON file"""
-    config = {
-        "timber": timber_prices,
-        "plywood": plywood_prices,
-        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "version": "25.0"
-    }
-    
-    try:
-        os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
-        with open(CONFIG_PATH, 'w') as f:
-            json.dump(config, f, indent=2)
-        return True, "Prices saved successfully!"
-    except Exception as e:
-        return False, f"Error saving: {e}"
-
-# ==============================
-# LOAD CURRENT PRICES
-# ==============================
-prices = load_prices()
-if prices is None:
-    st.stop()
-
-timber_prices = prices["timber"]
-plywood_prices = prices["plywood"]
-
-# Display last updated info
-col_info1, col_info2, col_info3 = st.columns(3)
-with col_info1:
-    st.info(f"📅 Prices updated: {prices.get('last_updated', 'Unknown')}")
-with col_info2:
-    st.info(f"📌 Version: {prices.get('version', '25.0')}")
-with col_info3:
-    if st.button("🔄 Refresh Prices", help="Reload prices from config file"):
-        st.cache_data.clear()
-        st.rerun()
 
 # ==============================
 # RESET FUNCTION
@@ -106,155 +21,91 @@ def reset_all():
     st.rerun()
 
 # ==============================
-# PRICE MANAGEMENT SECTION (OFFLINE EDITOR)
+# RATES SECTION - EASILY EDITABLE (NO JSON REQUIRED)
 # ==============================
-with st.expander("💰 Price Management (Edit Offline - Saves to JSON)", expanded=False):
-    st.warning("⚠️ Changes save to config/prices.json locally. Commit & push to GitHub for Streamlit Cloud.")
-    
-    tab1, tab2, tab3 = st.tabs(["Timber Prices", "Plywood Prices", "Instructions"])
-    
-    with tab1:
-        st.subheader("Timber Rates ($/ton)")
-        col1, col2, col3, col4, col5 = st.columns(5)
-        
-        edited_timber = {}
-        with col1:
-            edited_timber["Kapur"] = st.number_input(
-                "Kapur", 
-                value=float(timber_prices["Kapur"]), 
-                step=50.0, 
-                format="%.0f",
-                key="edit_kapur"
-            )
-        with col2:
-            edited_timber["Balau"] = st.number_input(
-                "Balau", 
-                value=float(timber_prices["Balau"]), 
-                step=50.0,
-                format="%.0f", 
-                key="edit_balau"
-            )
-        with col3:
-            edited_timber["Chengal"] = st.number_input(
-                "Chengal", 
-                value=float(timber_prices["Chengal"]), 
-                step=50.0,
-                format="%.0f", 
-                key="edit_chengal"
-            )
-        with col4:
-            edited_timber["Mixed Keruing"] = st.number_input(
-                "Mixed Keruing", 
-                value=float(timber_prices["Mixed Keruing"]), 
-                step=50.0,
-                format="%.0f", 
-                key="edit_mixed"
-            )
-        with col5:
-            edited_timber["Pure Keruing"] = st.number_input(
-                "Pure Keruing", 
-                value=float(timber_prices["Pure Keruing"]), 
-                step=50.0,
-                format="%.0f", 
-                key="edit_pure"
-            )
-    
-    with tab2:
-        st.subheader("Plywood Prices ($/sheet)")
-        
-        # Display current plywood prices in editable JSON format
-        plywood_json = st.text_area(
-            "Edit Plywood Prices (JSON format)",
-            value=json.dumps(plywood_prices, indent=2),
-            height=400,
-            help="Format: {'Grade': {'thickness': price, ...}, ...}"
-        )
-        
-        # Validate JSON
-        try:
-            test_json = json.loads(plywood_json)
-            st.success("✅ Valid JSON format")
-        except json.JSONDecodeError as e:
-            st.error(f"❌ Invalid JSON: {e}")
-    
-    with tab3:
-        st.markdown("""
-        ### How to Update Prices Offline:
-        
-        **Option 1: Edit directly in this app**
-        1. Modify prices above
-        2. Click "Save Prices to File" button
-        3. File saves to `config/prices.json`
-        4. Commit and push to GitHub
-        
-        **Option 2: Edit JSON file directly**
-        1. Open `config/prices.json` in any text editor
-        2. Update the numbers
-        3. Save file
-        4. Commit and push to GitHub
-        
-        **Option 3: GitHub web interface**
-        1. Go to your GitHub repository
-        2. Navigate to `config/prices.json`
-        3. Click edit (pencil icon)
-        4. Modify prices
-        5. Commit changes
-        
-        **After updating:**
-        - Streamlit Cloud auto-deploys within 1-2 minutes
-        - Click "Refresh Prices" button above to reload
-        """)
-    
-    col_save1, col_save2 = st.columns(2)
-    with col_save1:
-        if st.button("💾 Save Prices to JSON File", type="primary"):
-            try:
-                new_plywood = json.loads(plywood_json)
-                success, message = save_prices(edited_timber, new_plywood)
-                if success:
-                    st.success(message)
-                    st.info("🔄 Click 'Refresh Prices' above to reload into app")
-                    st.cache_data.clear()
-                else:
-                    st.error(message)
-            except json.JSONDecodeError as e:
-                st.error(f"Invalid JSON: {e}")
-    with col_save2:
-        if st.button("🗑️ Reset to Default Prices"):
-            default_config = {
-                "timber": {
-                    "Kapur": 3800.0, "Balau": 5500.0, "Chengal": 6000.0,
-                    "Mixed Keruing": 650.0, "Pure Keruing": 1000.0
-                },
-                "plywood": {
-                    "Marine": {"6": 25.5, "9": 37.0, "12": 45.0, "15": 56.0, "18": 68.5, "25": 95.0},
-                    "Furniture": {"3": 15.0, "6": 17.5, "9": 19.5, "12": 23.8, "15": 26.8, "18": 31.5, "25": 45.0},
-                    "MR": {"3": 4.1, "6": 6.8, "9": 10.5, "12": 15.0, "15": 19.5, "18": 21.7}
-                },
-                "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "version": "25.0"
-            }
-            with open(CONFIG_PATH, 'w') as f:
-                json.dump(default_config, f, indent=2)
-            st.success("Reset to default prices!")
-            st.cache_data.clear()
-            st.rerun()
+st.subheader("💰 Current Rates - Edit Any Time")
+
+col1, col2, col3, col4, col5 = st.columns(5)
+
+with col1:
+    kapur_rate = st.number_input("Kapur ($/ton)", value=3800, step=50, key="kapur_rate")
+with col2:
+    balau_rate = st.number_input("Balau ($/ton)", value=5500, step=50, key="balau_rate")
+with col3:
+    chengal_rate = st.number_input("Chengal ($/ton)", value=6000, step=50, key="chengal_rate")
+with col4:
+    mixed_keruing_rate = st.number_input("Mixed Keruing ($/ton)", value=650, step=50, key="mixed_rate")
+with col5:
+    pure_keruing_rate = st.number_input("Pure Keruing ($/ton)", value=1000, step=50, key="pure_rate")
+
+# Create rates dictionary from current inputs
+species_rate = {
+    "Kapur": kapur_rate,
+    "Balau": balau_rate,
+    "Chengal": chengal_rate,
+    "Mixed Keruing": mixed_keruing_rate,
+    "Pure Keruing": pure_keruing_rate
+}
 
 # ==============================
-# DISPLAY CURRENT RATES
+# PLYWOOD PRICES - EASILY EDITABLE
 # ==============================
-st.subheader("💰 Current Market Rates")
-col_r1, col_r2, col_r3, col_r4, col_r5 = st.columns(5)
-with col_r1:
-    st.metric("Kapur", f"${timber_prices['Kapur']:,.0f}/ton")
-with col_r2:
-    st.metric("Balau", f"${timber_prices['Balau']:,.0f}/ton")
-with col_r3:
-    st.metric("Chengal", f"${timber_prices['Chengal']:,.0f}/ton")
-with col_r4:
-    st.metric("Mixed Keruing", f"${timber_prices['Mixed Keruing']:,.0f}/ton")
-with col_r5:
-    st.metric("Pure Keruing", f"${timber_prices['Pure Keruing']:,.0f}/ton")
+st.subheader("📋 Plywood Prices ($/sheet) - Edit Any Time")
+
+plywood_tab1, plywood_tab2, plywood_tab3 = st.tabs(["Marine", "Furniture", "MR"])
+
+with plywood_tab1:
+    col_a, col_b, col_c = st.columns(3)
+    with col_a:
+        marine_6mm = st.number_input("Marine 6mm", value=25.5, step=0.5, key="marine_6", format="%.1f")
+        marine_9mm = st.number_input("Marine 9mm", value=37.0, step=0.5, key="marine_9", format="%.1f")
+        marine_12mm = st.number_input("Marine 12mm", value=45.0, step=0.5, key="marine_12", format="%.1f")
+    with col_b:
+        marine_15mm = st.number_input("Marine 15mm", value=56.0, step=0.5, key="marine_15", format="%.1f")
+        marine_18mm = st.number_input("Marine 18mm", value=68.5, step=0.5, key="marine_18", format="%.1f")
+        marine_25mm = st.number_input("Marine 25mm", value=95.0, step=0.5, key="marine_25", format="%.1f")
+
+with plywood_tab2:
+    col_a, col_b, col_c = st.columns(3)
+    with col_a:
+        furn_3mm = st.number_input("Furniture 3mm", value=15.0, step=0.5, key="furn_3", format="%.1f")
+        furn_6mm = st.number_input("Furniture 6mm", value=17.5, step=0.5, key="furn_6", format="%.1f")
+        furn_9mm = st.number_input("Furniture 9mm", value=19.5, step=0.5, key="furn_9", format="%.1f")
+    with col_b:
+        furn_12mm = st.number_input("Furniture 12mm", value=23.8, step=0.5, key="furn_12", format="%.1f")
+        furn_15mm = st.number_input("Furniture 15mm", value=26.8, step=0.5, key="furn_15", format="%.1f")
+        furn_18mm = st.number_input("Furniture 18mm", value=31.5, step=0.5, key="furn_18", format="%.1f")
+    with col_c:
+        furn_25mm = st.number_input("Furniture 25mm", value=45.0, step=0.5, key="furn_25", format="%.1f")
+
+with plywood_tab3:
+    col_a, col_b = st.columns(2)
+    with col_a:
+        mr_3mm = st.number_input("MR 3mm", value=4.1, step=0.5, key="mr_3", format="%.1f")
+        mr_6mm = st.number_input("MR 6mm", value=6.8, step=0.5, key="mr_6", format="%.1f")
+        mr_9mm = st.number_input("MR 9mm", value=10.5, step=0.5, key="mr_9", format="%.1f")
+    with col_b:
+        mr_12mm = st.number_input("MR 12mm", value=15.0, step=0.5, key="mr_12", format="%.1f")
+        mr_15mm = st.number_input("MR 15mm", value=19.5, step=0.5, key="mr_15", format="%.1f")
+        mr_18mm = st.number_input("MR 18mm", value=21.7, step=0.5, key="mr_18", format="%.1f")
+
+# Create plywood prices dictionary
+plywood_prices = {
+    "Marine": {
+        6: marine_6mm, 9: marine_9mm, 12: marine_12mm,
+        15: marine_15mm, 18: marine_18mm, 25: marine_25mm
+    },
+    "Furniture": {
+        3: furn_3mm, 6: furn_6mm, 9: furn_9mm,
+        12: furn_12mm, 15: furn_15mm, 18: furn_18mm, 25: furn_25mm
+    },
+    "MR": {
+        3: mr_3mm, 6: mr_6mm, 9: mr_9mm,
+        12: mr_12mm, 15: mr_15mm, 18: mr_18mm
+    }
+}
+
+st.divider()
 
 # ==============================
 # MODE SELECTION
@@ -303,17 +154,6 @@ def calc(thk, wid, length, rate):
 def is_keruing(species):
     return species in ["Mixed Keruing", "Pure Keruing"]
 
-def validate_dimensions(thk, wid, length):
-    """Validate timber dimensions"""
-    errors = []
-    if thk < 1 or thk > 12:
-        errors.append("Thickness should be 1-12 inches")
-    if wid < 2 or wid > 24:
-        errors.append("Width should be 2-24 inches")
-    if length < 4 or length > 20:
-        errors.append("Length should be 4-20 feet")
-    return errors
-
 # ==============================
 # MAIN FORM
 # ==============================
@@ -323,16 +163,10 @@ with st.form("main_form"):
         enquiry = st.text_area("Customer Enquiry", height=200, 
                                placeholder="Example:\nKapur 20mm x 100mm x 2.4m 50pcs\nBalau 1\" x 3\" x 8ft 100pcs")
         
-        # Sample button for testing
-        sample_clicked = st.form_submit_button("Load Sample Enquiry")
-        if sample_clicked:
-            st.session_state.sample_enquiry = """Kapur 20mm x 100mm x 2.4m 50pcs
+        if st.form_submit_button("Load Sample"):
+            enquiry = """Kapur 20mm x 100mm x 2.4m 50pcs
 Balau 1" x 3" x 8ft 100pcs
 Chengal 25mm x 150mm x 3.0m 25pcs"""
-            st.rerun()
-        
-        if "sample_enquiry" in st.session_state:
-            enquiry = st.session_state.sample_enquiry
     
     if mode == "Manual Table":
         st.subheader("📋 Timber Order Table")
@@ -391,7 +225,7 @@ Chengal 25mm x 150mm x 3.0m 25pcs"""
     
     colA, colB = st.columns(2)
     generate = colA.form_submit_button("🚀 Generate Quote", type="primary", use_container_width=True)
-    refresh = colB.form_submit_button("🔄 Refresh", use_container_width=True)
+    refresh = colB.form_submit_button("🔄 Reset", use_container_width=True)
 
 # ==============================
 # HANDLE REFRESH
@@ -470,20 +304,12 @@ if generate:
                     else:
                         length = int(v3)
                     
-                    # Fix for length 19
                     if length == 19:
                         length = 20
                     
-                    # Validation
-                    dimension_errors = validate_dimensions(thk, wid, length)
-                    if dimension_errors:
-                        errors.extend([f"Line {line_num}: {err}" for err in dimension_errors])
-                        continue
-                    
-                    rate = timber_prices[current_species]
+                    rate = species_rate[current_species]
                     pcs_per_ton, pcs, price = calc(thk, wid, length, rate)
                     
-                    # Size text formatting
                     if is_keruing(current_species):
                         size_text = f'{thk}" x {wid}" x {length}ft'
                     else:
@@ -530,7 +356,6 @@ Total : ${line_total:,.2f}
                 l = float(row["Length"])
                 qty = int(row["Qty"])
                 
-                # Convert units
                 thk = mm_to_inch(t) if row["T Unit"] == "mm" else int(t)
                 wid = mm_to_inch(w) if row["W Unit"] == "mm" else int(w)
                 length = m_to_ft(l) if row["L Unit"] == "m" else int(l)
@@ -538,13 +363,7 @@ Total : ${line_total:,.2f}
                 if length == 19:
                     length = 20
                 
-                # Validation
-                dimension_errors = validate_dimensions(thk, wid, length)
-                if dimension_errors:
-                    errors.extend([f"Row {idx+1}: {err}" for err in dimension_errors])
-                    continue
-                
-                rate = timber_prices[species]
+                rate = species_rate[species]
                 pcs_per_ton, pcs, price = calc(thk, wid, length, rate)
                 
                 if is_keruing(species):
@@ -592,17 +411,15 @@ Total : ${line_total:,.2f}
                 
                 note = ""
                 
-                # Apply MOQ rules
                 if grade == "MR" and thk == 3 and qty < 10:
                     qty = 10
                     note = "⚠️ Minimum order quantity for MR 3mm is 10pcs (adjusted)"
                 
-                thk_str = str(thk)
-                if thk_str not in plywood_prices.get(grade, {}):
+                if thk not in plywood_prices[grade]:
                     errors.append(f"Plywood row {idx+1}: Thickness {thk}mm not available for {grade}")
                     continue
                 
-                price = plywood_prices[grade][thk_str]
+                price = plywood_prices[grade][thk]
                 line_total = round(price * qty, 2)
                 grand_total += line_total
                 
@@ -634,26 +451,20 @@ Total : ${line_total:,.2f}
             for error in errors:
                 st.error(error)
     
-    # Display results if there are any items
+    # Display results
     if internal_view:
-        # Summary metrics
         st.subheader("📊 Quote Summary")
-        col_m1, col_m2, col_m3 = st.columns(3)
+        col_m1, col_m2 = st.columns(2)
         with col_m1:
             st.metric("Total Items", len(customer_reply))
         with col_m2:
             st.metric("Grand Total", f"${grand_total:,.2f}")
-        with col_m3:
-            st.metric("Quote Generated", datetime.now().strftime("%H:%M:%S"))
         
-        # Internal View (for staff)
         with st.expander("🔧 Internal View (Staff Only)", expanded=False):
             st.text_area("Detailed Calculations", "\n\n".join(internal_view), height=400)
         
-        # Customer Reply
         st.subheader("📄 Customer Quote")
         
-        # Add footer
         customer_reply.append(f"\n💰 **TOTAL: ${round(grand_total, 2)}**")
         customer_reply.append("\n---")
         customer_reply.append("📏 **Tolerances:**")
@@ -666,17 +477,12 @@ Total : ${line_total:,.2f}
         
         st.text_area("Ready to Send", "\n".join(customer_reply), height=400)
         
-        # Export option
-        col_e1, col_e2 = st.columns(2)
-        with col_e1:
-            st.download_button(
-                label="📥 Download Quote (TXT)",
-                data="\n".join(customer_reply),
-                file_name=f"timber_quote_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                mime="text/plain"
-            )
-        with col_e2:
-            st.info("💡 Tip: Copy the quote above and paste into email/WhatsApp")
+        st.download_button(
+            label="📥 Download Quote",
+            data="\n".join(customer_reply),
+            file_name=f"timber_quote_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+            mime="text/plain"
+        )
     else:
         st.warning("No valid items to process. Please check your inputs.")
 
@@ -684,4 +490,4 @@ Total : ${line_total:,.2f}
 # FOOTER
 # ==============================
 st.markdown("---")
-st.caption("🪵 DS V25 Timber AI Buddy | Powered by Streamlit | Prices stored in config/prices.json")
+st.caption("🪵 DS V25 Timber AI Buddy | Edit rates directly above - no coding required!")
