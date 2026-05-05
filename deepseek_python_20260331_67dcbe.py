@@ -104,36 +104,36 @@ with st.expander("Plywood Prices (SGD/sheet)", expanded=False):
         col_a, col_b, col_c = st.columns(3)
         with col_a:
             marine_6mm = st.number_input("Marine 6mm", value=25.5, step=0.5, key="marine_6", format="%.1f")
-            marine_9mm = st.number_input("Marine 9mm", value=37.0, step=0.5, key="marine_9", format="%.1f")
-            marine_12mm = st.number_input("Marine 12mm", value=45.0, step=0.5, key="marine_12", format="%.1f")
+            marine_9mm = st.number_input("Marine 9mm", value=36.0, step=0.5, key="marine_9", format="%.1f")
+            marine_12mm = st.number_input("Marine 12mm", value=45.96, step=0.5, key="marine_12", format="%.1f")
         with col_b:
-            marine_15mm = st.number_input("Marine 15mm", value=56.0, step=0.5, key="marine_15", format="%.1f")
-            marine_18mm = st.number_input("Marine 18mm", value=68.5, step=0.5, key="marine_18", format="%.1f")
-            marine_25mm = st.number_input("Marine 25mm", value=95.0, step=0.5, key="marine_25", format="%.1f")
+            marine_15mm = st.number_input("Marine 15mm", value=52.0, step=0.5, key="marine_15", format="%.1f")
+            marine_18mm = st.number_input("Marine 18mm", value=63.0, step=0.5, key="marine_18", format="%.1f")
+            marine_25mm = st.number_input("Marine 25mm", value=84.0, step=0.5, key="marine_25", format="%.1f")
     
     with plywood_tab2:
         col_a, col_b, col_c = st.columns(3)
         with col_a:
-            furn_3mm = st.number_input("Furniture 3mm", value=15.0, step=0.5, key="furn_3", format="%.1f")
-            furn_6mm = st.number_input("Furniture 6mm", value=17.5, step=0.5, key="furn_6", format="%.1f")
-            furn_9mm = st.number_input("Furniture 9mm", value=19.5, step=0.5, key="furn_9", format="%.1f")
+            furn_3mm = st.number_input("Furniture 3mm", value=5.72, step=0.5, key="furn_3", format="%.1f")
+            furn_6mm = st.number_input("Furniture 6mm", value=14.3, step=0.5, key="furn_6", format="%.1f")
+            furn_9mm = st.number_input("Furniture 9mm", value=16.75, step=0.5, key="furn_9", format="%.1f")
         with col_b:
-            furn_12mm = st.number_input("Furniture 12mm", value=23.8, step=0.5, key="furn_12", format="%.1f")
-            furn_15mm = st.number_input("Furniture 15mm", value=26.8, step=0.5, key="furn_15", format="%.1f")
-            furn_18mm = st.number_input("Furniture 18mm", value=31.5, step=0.5, key="furn_18", format="%.1f")
+            furn_12mm = st.number_input("Furniture 12mm", value=21.0, step=0.5, key="furn_12", format="%.1f")
+            furn_15mm = st.number_input("Furniture 15mm", value=26.4, step=0.5, key="furn_15", format="%.1f")
+            furn_18mm = st.number_input("Furniture 18mm", value=30.84, step=0.5, key="furn_18", format="%.1f")
         with col_c:
-            furn_25mm = st.number_input("Furniture 25mm", value=45.0, step=0.5, key="furn_25", format="%.1f")
+            furn_25mm = st.number_input("Furniture 25mm", value=44.04, step=0.5, key="furn_25", format="%.1f")
     
     with plywood_tab3:
         col_a, col_b = st.columns(2)
         with col_a:
-            mr_3mm = st.number_input("MR 3mm", value=4.1, step=0.5, key="mr_3", format="%.1f")
-            mr_6mm = st.number_input("MR 6mm", value=6.8, step=0.5, key="mr_6", format="%.1f")
-            mr_9mm = st.number_input("MR 9mm", value=10.5, step=0.5, key="mr_9", format="%.1f")
+            mr_3mm = st.number_input("MR 3mm", value=3.25, step=0.5, key="mr_3", format="%.1f")
+            mr_6mm = st.number_input("MR 6mm", value=6.63, step=0.5, key="mr_6", format="%.1f")
+            mr_9mm = st.number_input("MR 9mm", value=9.36, step=0.5, key="mr_9", format="%.1f")
         with col_b:
-            mr_12mm = st.number_input("MR 12mm", value=15.0, step=0.5, key="mr_12", format="%.1f")
-            mr_15mm = st.number_input("MR 15mm", value=19.5, step=0.5, key="mr_15", format="%.1f")
-            mr_18mm = st.number_input("MR 18mm", value=21.7, step=0.5, key="mr_18", format="%.1f")
+            mr_12mm = st.number_input("MR 12mm", value=14.04, step=0.5, key="mr_12", format="%.1f")
+            mr_15mm = st.number_input("MR 15mm", value=19.0, step=0.5, key="mr_15", format="%.1f")
+            mr_18mm = st.number_input("MR 18mm", value=21.63, step=0.5, key="mr_18", format="%.1f")
 
 plywood_prices = {
     "Marine": {6: marine_6mm, 9: marine_9mm, 12: marine_12mm, 15: marine_15mm, 18: marine_18mm, 25: marine_25mm},
@@ -586,7 +586,7 @@ Total: S${line_total}
         final_reply.append("- Thickness/Width: +-1~2mm")
         final_reply.append("- Length: +-25~50mm")
         final_reply.append("\nDelivery / Self Collection:")
-        final_reply.append("30 Krani Loop (Blk A) #04-05")
+        final_reply.append("30 Kranji Loop (Blk A) #04-05")
         final_reply.append("TimMac @ Kranji S739570")
         
         customer_reply_text = "\n".join(final_reply)
